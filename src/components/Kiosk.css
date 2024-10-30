@@ -1,0 +1,196 @@
+/* Google Fonts 적용 */
+body {
+    font-family: 'Jua', sans-serif;
+    background-color: #f2f2f5;
+    color: #333;
+  }
+  
+  /* 메인 컨테이너 */
+  .kiosk-container {
+    padding: 30px;
+    background-color: #ebf0f8;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    max-width: 900px;
+    margin: 40px auto;
+    text-align: center;
+  }
+  
+  /* 타이틀 스타일 */
+  .kiosk-title {
+    font-family: 'Jua', sans-serif;
+    font-size: 34px;
+    font-weight: 600;
+    color: #2a2a35;
+    margin-bottom: 20px;
+  }
+  
+  /* 카테고리 선택 */
+  .category-selector {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 25px;
+  }
+  
+  .category-btn {
+    font-family: 'Jua', sans-serif;
+    padding: 12px 18px;
+    font-size: 18px;
+    background-color: #f2f4f8;
+    border: 1px solid #e1e4e8;
+    border-radius: 20px;
+    color: #2a2a35;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  
+  .category-btn.active {
+    background-color: #c57e8a;
+    color: #fff;
+  }
+  
+  /* 관리자 모드 버튼 */
+  .admin-controls {
+    font-family: 'Jua', sans-serif;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+    gap: 10px;
+  }
+  
+  .add-menu-btn, .add-category-btn, .delete-category-btn {
+    font-family: 'Jua', sans-serif;
+    padding: 10px 27px;
+    background-color: #327c99;
+    color:white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s, box-shadow 0.2s;
+  }
+  
+  .add-menu-btn:hover, .add-category-btn:hover, .delete-category-btn:hover {
+    background-color: #005f87;
+    transform: scale(1.05);
+    box-shadow: 0 5px 10px rgba(0, 91, 187, 0.2);
+  }
+  
+  .admin-tip {
+    font-family: 'Jua', sans-serif;
+    font-size: 14px;
+    color: #666;
+  }
+  
+  /* 메뉴 그리드 */
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+    gap: 20px;
+  }
+  
+  /* 메뉴 카드 */
+  .menu-item {
+    padding: 20px;
+    background-color: #fae1e1;
+    border-radius: 15px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .menu-item:hover {
+    transform: scale(1.02);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .menu-item-image {
+    width: 150px;
+    height: 150px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    object-fit: cover;
+  }
+  
+  /* 관리자 버튼 */
+  .admin-buttons {
+    font-family: 'Jua', sans-serif;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  
+  .delete-btn {
+    font-family: 'Jua', sans-serif;
+    background-color: #e74c3c;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .delete-btn:hover {
+    background-color: #c0392b;
+  }
+  
+  .menu-item-name {
+    font-family: 'Jua', sans-serif;
+    font-size: 20px;
+    font-weight: 500;
+    color: #2a2a35;
+    margin-top: 8px;
+  }
+  
+  .menu-item-price {
+    font-family: 'Jua', sans-serif;
+    font-size: 18px;
+    color: #4a4a4a;
+  }
+  
+  /* 관리자 모드 입력 스타일 */
+  .menu-item-input {
+    font-family: 'Jua', sans-serif;
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    background-color: #f8fafb;
+    margin-top: 10px;
+    text-align: center;
+    font-weight: 600;
+  }
+  /* kiosk.css 맨 아래 추가 */
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: -15px;
+  }
+  
+  .pagination-controls button {
+    font-family: 'Jua', sans-serif;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    transition: transform 0.3s ease;
+  }
+  
+  .pagination-controls button:hover {
+    transform: scale(1.1);
+  }
+  
+  .pagination-controls .active {
+    font-weight: bold;
+    color: #3498db;
+  }
+  
+  /* 페이지 전환 애니메이션 */
+  .menu-grid {
+    transition: all 0.3s ease-in-out;
+  }
+  
