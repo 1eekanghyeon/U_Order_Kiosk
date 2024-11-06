@@ -460,6 +460,33 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
     updatedCartItems.splice(index, 1);
     setCartItems(updatedCartItems);
   };
+  // CafeKiosk.js
+
+// ... 기존 코드 ...
+
+  const handlePayment = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/payments/ready', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cartItems, totalAmount: cartTotal }),
+      });
+
+      const data = await response.json();
+
+      // 결제 고유 번호(tid)를 로컬 스토리지에 저장합니다.
+      localStorage.setItem('tid', data.tid);
+
+      // 카카오페이 결제 페이지로 리다이렉션합니다.
+      window.location.href = data.next_redirect_pc_url;
+    } catch (error) {
+      console.error('결제 준비 중 오류가 발생했습니다.', error);
+      alert('결제 준비 중 오류가 발생했습니다.');
+    }
+  };
+
 
   return (
     <div className="kiosk-container">
@@ -697,7 +724,11 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
             </ul>
             <p className="cart-total">총 합계: ₩{cartTotal.toLocaleString()}</p>
             <div className="modal-buttons">
-              <button className="modal-add-btn">결제하기</button>
+             
+            <button className="modal-add-btn" onClick={handlePayment}>
+              결제하기
+            </button>
+
               <button
                 className="modal-cancel-btn"
                 onClick={() => setShowCartPopup(false)}

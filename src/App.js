@@ -13,6 +13,8 @@ import CafeKiosk from "./components/CafeKiosk";
 import WaitingScreen from "./components/WaitingScreen";
 import './App.css';
 import logo from './assets/logo.png';
+import PaymentResult from './components/PaymentResult';
+
 
 // Firestore 관련 import 추가
 import { db } from './firebase';
@@ -35,12 +37,13 @@ function App() {
   const handleLoginSuccess = (isAdminStatus, emailValue, storeIdValue) => {
     setIsAdmin(isAdminStatus); // isAdmin 설정
     setEmail(emailValue);
+    setStoreId(storeIdValue); // storeId 설정
     setIsWaiting(true); // 모든 사용자에 대해 isWaiting을 true로 설정
   };
 
   // 대기 화면에서 가게 선택 시 호출
   const changeStore = (storeIdValue) => {
-    setStoreId(storeIdValue); // storeId 업데이트
+    
     // setIsWaiting(false); // 이 부분을 제거합니다.
   };
 
@@ -52,7 +55,7 @@ function App() {
         if (doc.exists()) {
           const data = doc.data();
           setSignal(data.signal);
-          setStoreId(data.storeId);
+          
           // signal 값이 변경되면 isAdminMode를 false로 설정
           setIsAdminMode(false);
 
@@ -74,6 +77,10 @@ function App() {
         <img src={logo} alt="U-Order Logo" className="app-logo" />
 
         <Routes>
+        <Route path="/payments/success" element={<PaymentResult />} />
+        <Route path="/payments/cancel" element={<PaymentResult />} />
+        <Route path="/payments/fail" element={<PaymentResult />} />
+
           <Route
             path="/"
             element={
