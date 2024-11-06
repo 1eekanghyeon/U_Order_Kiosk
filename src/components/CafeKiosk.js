@@ -190,13 +190,30 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
     if (!isAdminMode) return; // 관리자가 아닌 경우 실행하지 않음
     if (!result.destination) return;
 
-    const sourceIndex = result.source.index + currentPage * ITEMS_PER_PAGE;
-    const destinationIndex = result.destination.index + currentPage * ITEMS_PER_PAGE;
+    // 현재 페이지 내에서의 인덱스
+    const sourceIndex = result.source.index;
+    const destinationIndex = result.destination.index;
 
-    // 메뉴 아이템 순서 변경
-    const newMenuItems = Array.from(menuItems);
-    const [movedItem] = newMenuItems.splice(sourceIndex, 1);
-    newMenuItems.splice(destinationIndex, 0, movedItem);
+    // 현재 카테고리에 해당하는 전체 아이템들에서의 인덱스
+    const sourceGlobalIndex = filteredItems
+      .map((item) => item.id)
+      .indexOf(paginatedMenuItems[sourceIndex].id);
+    const destinationGlobalIndex = filteredItems
+      .map((item) => item.id)
+      .indexOf(paginatedMenuItems[destinationIndex].id);
+
+    // filteredItems에서 순서 변경
+    const newFilteredItems = Array.from(filteredItems);
+    const [movedItem] = newFilteredItems.splice(sourceGlobalIndex, 1);
+    newFilteredItems.splice(destinationGlobalIndex, 0, movedItem);
+
+    // 전체 menuItems에서 해당 카테고리의 아이템들을 새로운 순서로 대체
+    const newMenuItems = menuItems.map((item) => {
+      if (item.category === selectedCategory) {
+        return newFilteredItems.shift();
+      }
+      return item;
+    });
 
     setMenuItems(newMenuItems);
 
