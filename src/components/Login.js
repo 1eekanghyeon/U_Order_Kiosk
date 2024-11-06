@@ -6,6 +6,8 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signInWithEmailAndPassword,
+  EmailAuthProvider,
+  linkWithCredential,
 } from "firebase/auth";
 import { auth, db } from "../firebase";
 import { doc, getDoc, setDoc, collection, getDocs } from "firebase/firestore";
@@ -17,11 +19,12 @@ const Login = ({ onLoginSuccess }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const [isGoogleLogin, setIsGoogleLogin] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    id: "",
-    uwbMac: "",
     email: "",
+    name: "",
+    id: "",
+    password: "",
+    confirmPassword: "",
+    uwbMac: "",
     isAdmin: false,
     signal: "",
   });
@@ -109,18 +112,42 @@ const Login = ({ onLoginSuccess }) => {
     }
   };
 
-  // 추가 정보 입력 후 Firestore에 저장
+  // 추가 정보 입력 후 Firestore에 저장 및 이메일/비밀번호 인증 연결
   const handleAdditionalInfoSubmit = async (e) => {
     e.preventDefault();
+
+    const { email, name, id, password, confirmPassword, uwbMac, isAdmin } = formData;
+
+    // 비밀번호와 확인 비밀번호 일치 여부 확인
+    if (password !== confirmPassword) {
+      setErrorMessage("비밀번호가 일치하지 않습니다.");
+      setErrorPopup(true);
+      return;
+    }
+
     try {
-      // Firestore에 추가 정보 저장 (이메일을 문서 ID로 사용)
-      const userDocRef = doc(db, "users", formData.email);
+      // 현재 사용자 가져오기
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        setErrorMessage("현재 사용자를 찾을 수 없습니다.");
+        setErrorPopup(true);
+        return;
+      }
+
+      // 이메일/비밀번호 인증 정보 생성
+      const credential = EmailAuthProvider.credential(email, password);
+
+      // 이메일/비밀번호 인증을 현재 사용자에 링크
+      await linkWithCredential(currentUser, credential);
+      console.log("이메일/비밀번호 인증이 성공적으로 연결되었습니다.");
+
+      // Firestore에 사용자 정보 저장 (비밀번호는 저장하지 않음)
+      const userDocRef = doc(db, "users", email);
 
       let storeId = null;
 
-      if (formData.isAdmin) {
+      if (isAdmin) {
         // 관리자인 경우 고유한 매장 ID 부여
-        // 현재 존재하는 매장 ID들을 가져와서 새로운 ID 생성
         const kioskCollectionRef = collection(db, "kiosk");
         const kioskDocs = await getDocs(kioskCollectionRef);
         const existingStoreIds = kioskDocs.docs
@@ -137,25 +164,25 @@ const Login = ({ onLoginSuccess }) => {
         });
       }
 
-      // 사용자 정보 저장
+      // 사용자 정보 저장 (비밀번호와 확인 비밀번호는 저장하지 않음)
       await setDoc(userDocRef, {
-        email: formData.email,
-        name: formData.name,
-        phone: formData.phone,
-        id: formData.id,
-        uwbMac: formData.uwbMac,
-        isAdmin: formData.isAdmin,
-        signal: formData.isAdmin && storeId ? storeId.toString() : "", // 관리자일 경우 signal 설정
+        email: email,
+        name: name,
+        id: id,
+        uwbMac: uwbMac,
+        isAdmin: isAdmin,
+        signal: isAdmin && storeId ? storeId.toString() : "", // 관리자일 경우 signal 설정
         storeId: storeId, // 관리자일 경우 storeId 저장
       });
 
       alert("추가 정보가 저장되었습니다.");
 
       // 추가 정보 저장 후 onLoginSuccess 호출
-      onLoginSuccess(formData.isAdmin, formData.email, storeId);
+      onLoginSuccess(isAdmin, email, storeId);
     } catch (error) {
       console.error("정보 저장 중 오류:", error);
-      alert("정보 저장 중 오류가 발생했습니다.");
+      setErrorMessage("정보 저장 중 오류가 발생했습니다.");
+      setErrorPopup(true);
     }
   };
 
@@ -213,21 +240,11 @@ const Login = ({ onLoginSuccess }) => {
             <input type="email" name="email" value={formData.email} disabled />
           </div>
           <div>
-            <label>Name:</label>
+            <label>이름:</label>
             <input
               type="text"
               name="name"
               value={formData.name}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div>
-            <label>Phone:</label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
               onChange={handleChange}
               required
             />
@@ -243,7 +260,27 @@ const Login = ({ onLoginSuccess }) => {
             />
           </div>
           <div>
-            <label>UWB MAC Address:</label>
+            <label>비밀번호:</label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div>
+            <label>비밀번호 확인:</label>
+            <input
+              type="password"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div>
+            <label>UWB MAC 주소:</label>
             <input
               type="text"
               name="uwbMac"
@@ -268,7 +305,7 @@ const Login = ({ onLoginSuccess }) => {
       {errorPopup && (
         <div className="popup-overlay">
           <div className="popup-message">
-            <h2>로그인 오류</h2>
+            <h2>오류</h2>
             <p>{errorMessage}</p>
             <button onClick={closePopup}>닫기</button>
           </div>

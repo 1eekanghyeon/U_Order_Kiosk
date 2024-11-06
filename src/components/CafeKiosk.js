@@ -81,26 +81,26 @@ const DraggableMenuItem = ({ item, index, updateMenuItem, deleteMenuItem }) => {
   );
 };
 
-const CafeKiosk = ({ isAdminMode, userEmail, storeId }) => {
+const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null); // 초기 선택된 카테고리 없음
   const [menuItems, setMenuItems] = useState([]);
-  const [menuTitle, setMenuTitle] = useState("카페 메뉴"); // 메뉴 제목 상태 추가
+  const [menuTitle, setMenuTitle] = useState(""); // 메뉴 제목 상태 추가
   const [currentPage, setCurrentPage] = useState(0); // 현재 페이지 번호
 
   // Firestore에서 데이터 불러오기
   useEffect(() => {
-    if (!storeId) return; // storeId가 없으면 리턴
+    if (!signal) return; // signal가 없으면 리턴
 
     const fetchData = async () => {
-      const kioskDocRef = doc(db, "kiosk", storeId.toString());
+      const kioskDocRef = doc(db, "kiosk", signal);
       const docSnap = await getDoc(kioskDocRef);
 
       if (docSnap.exists()) {
         const data = docSnap.data();
         setCategories(data.categories || ["카테고리1", "카테고리2", "카테고리3"]);
         setMenuItems(data.menuItems || []);
-        setMenuTitle(data.menuTitle || "카페 메뉴"); // menuTitle 불러오기
+        setMenuTitle(data.menuTitle || ""); // menuTitle 불러오기
         setSelectedCategory(data.categories ? data.categories[0] : "카테고리1"); // 첫 번째 카테고리 선택
         setCurrentPage(0); // 페이지 초기화
       } else {
@@ -123,7 +123,7 @@ const CafeKiosk = ({ isAdminMode, userEmail, storeId }) => {
       }
     };
     fetchData();
-  }, [storeId, isAdminMode]);
+  }, [signal, isAdminMode]);
 
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
@@ -150,7 +150,7 @@ const CafeKiosk = ({ isAdminMode, userEmail, storeId }) => {
     const updatedItems = [...menuItems, newItem];
     setMenuItems(updatedItems);
 
-    const kioskDocRef = doc(db, "kiosk", storeId.toString());
+    const kioskDocRef = doc(db, "kiosk", signal.toString());
     await setDoc(kioskDocRef, { menuItems: updatedItems }, { merge: true });
   };
 
@@ -159,7 +159,7 @@ const CafeKiosk = ({ isAdminMode, userEmail, storeId }) => {
 
     const updatedItems = menuItems.filter((item) => item.id !== id);
     setMenuItems(updatedItems);
-    const kioskDocRef = doc(db, "kiosk", storeId.toString());
+    const kioskDocRef = doc(db, "kiosk", signal.toString());
 
     await setDoc(kioskDocRef, { menuItems: updatedItems }, { merge: true });
   };
@@ -172,7 +172,7 @@ const CafeKiosk = ({ isAdminMode, userEmail, storeId }) => {
     );
     setMenuItems(updatedItems);
 
-    const kioskDocRef = doc(db, "kiosk", storeId.toString());
+    const kioskDocRef = doc(db, "kiosk", signal.toString());
     await setDoc(kioskDocRef, { menuItems: updatedItems }, { merge: true });
   };
 
@@ -200,7 +200,7 @@ const CafeKiosk = ({ isAdminMode, userEmail, storeId }) => {
 
     setMenuItems(newMenuItems);
 
-    const kioskDocRef = doc(db, "kiosk", storeId.toString());
+    const kioskDocRef = doc(db, "kiosk", signal.toString());
     await setDoc(kioskDocRef, { menuItems: newMenuItems }, { merge: true });
   };
 
@@ -213,7 +213,7 @@ const CafeKiosk = ({ isAdminMode, userEmail, storeId }) => {
       setCategories(updatedCategories);
 
       // Firestore에 업데이트
-      const kioskDocRef = doc(db, "kiosk", storeId.toString());
+      const kioskDocRef = doc(db, "kiosk", signal.toString());
       await setDoc(kioskDocRef, { categories: updatedCategories }, { merge: true });
     }
   };
@@ -228,7 +228,7 @@ const CafeKiosk = ({ isAdminMode, userEmail, storeId }) => {
       setMenuItems(updatedItems);
 
       // Firestore에 업데이트
-      const kioskDocRef = doc(db, "kiosk", storeId.toString());
+      const kioskDocRef = doc(db, "kiosk", signal.toString());
       await setDoc(
         kioskDocRef,
         {
@@ -266,7 +266,7 @@ const CafeKiosk = ({ isAdminMode, userEmail, storeId }) => {
       setMenuItems(updatedItems);
 
       // Firestore에 업데이트된 카테고리와 메뉴 저장
-      const kioskDocRef = doc(db, "kiosk", storeId.toString());
+      const kioskDocRef = doc(db, "kiosk", signal.toString());
       await setDoc(
         kioskDocRef,
         {
@@ -297,7 +297,7 @@ const CafeKiosk = ({ isAdminMode, userEmail, storeId }) => {
 
     setMenuTitle(newTitle);
 
-    const kioskDocRef = doc(db, "kiosk", storeId.toString());
+    const kioskDocRef = doc(db, "kiosk", signal.toString());
     await setDoc(kioskDocRef, { menuTitle: newTitle }, { merge: true });
   };
 
@@ -309,7 +309,7 @@ const CafeKiosk = ({ isAdminMode, userEmail, storeId }) => {
           value={menuTitle}
           onChange={(e) => handleTitleChange(e.target.value)}
           className="kiosk-title-input"
-          placeholder="메뉴 제목을 입력하세요"
+          placeholder="키오스크 이름을 입력하세요"
         />
       ) : (
         <h2 className="kiosk-title">{menuTitle}</h2>

@@ -1,6 +1,6 @@
 // App.js
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -14,12 +14,17 @@ import WaitingScreen from "./components/WaitingScreen";
 import './App.css';
 import logo from './assets/logo.png';
 
+// Firestore 관련 import 추가
+import { db } from './firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
+
 function App() {
   const [storeId, setStoreId] = useState(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isWaiting, setIsWaiting] = useState(false);
   const [email, setEmail] = useState('');
+  const [signal, setSignal] = useState(null); // signal 상태 추가
 
   // 관리자 모드 토글
   const toggleMode = () => {
@@ -27,20 +32,32 @@ function App() {
   };
 
   // 로그인 성공 시 호출
-  const handleLoginSuccess = (isAdminStatus, emailValue) => {
+  const handleLoginSuccess = (isAdminStatus, emailValue, storeIdValue) => {
     setIsAdmin(isAdminStatus); // isAdmin 설정
-    setIsAdminMode(isAdminStatus); // isAdminStatus로 초기 모드 설정
     setEmail(emailValue);
-
-    // 모든 사용자에 대해 isWaiting을 true로 설정
-    setIsWaiting(true);
+    setIsWaiting(true); // 모든 사용자에 대해 isWaiting을 true로 설정
+    setStoreId(storeIdValue);
   };
 
   // 대기 화면에서 가게 선택 시 호출
   const changeStore = (storeIdValue) => {
-    setStoreId(storeIdValue); // storeId 업데이트
+    // setStoreId(storeIdValue); // storeId 업데이트
     setIsWaiting(false); // 선택 후 대기 화면 해제
   };
+
+  // Firestore의 signal 값 변화를 감지
+  useEffect(() => {
+    if (email) {
+      const userDocRef = doc(db, 'users', email);
+      const unsubscribe = onSnapshot(userDocRef, (doc) => {
+        if (doc.exists()) {
+          const data = doc.data();
+          setSignal(data.signal);
+        }
+      });
+      return () => unsubscribe();
+    }
+  }, [email]);
 
   return (
     <Router>
@@ -83,6 +100,15 @@ function App() {
               !isWaiting ? (
                 <div>
                   {isAdmin && (
+                    <>
+                      {console.log("isAdmin:", isAdmin)}
+                      {console.log("signal:", signal)}
+                      {console.log("storeId:", storeId)}
+                      {console.log("signal === storeId:", String(signal) === String(storeId))}
+                      {console.log("isAdmin && storeId === signal", isAdmin && String(storeId) === signal)}
+                    </>
+                  )}
+                  {isAdmin && String(storeId) === signal && (
                     <button className="toggle-mode-btn" onClick={toggleMode}>
                       {isAdminMode ? "사용자 모드로 전환" : "관리자 모드로 전환"}
                     </button>
@@ -90,7 +116,7 @@ function App() {
                   <CafeKiosk
                     isAdminMode={isAdminMode}
                     userEmail={email}
-                    storeId={storeId}
+                    signal={signal}
                   />
                 </div>
               ) : (
