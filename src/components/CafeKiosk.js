@@ -13,6 +13,31 @@ const ITEMS_PER_PAGE = 4;
 
 // 개별 메뉴 항목을 드래그 가능하게 만드는 DraggableMenuItem
 const DraggableMenuItem = ({ item, index, updateMenuItem, deleteMenuItem }) => {
+  // 관리자 모드에서 옵션을 편집하기 위한 상태
+  const [optionName, setOptionName] = useState("");
+  const [optionChoices, setOptionChoices] = useState("");
+  const [options, setOptions] = useState(item.options || []);
+
+  const addOption = () => {
+    if (optionName && optionChoices) {
+      const newOption = {
+        name: optionName,
+        choices: optionChoices.split(",").map((choice) => choice.trim()),
+      };
+      const updatedOptions = [...options, newOption];
+      setOptions(updatedOptions);
+      updateMenuItem(item.id, "options", updatedOptions);
+      setOptionName("");
+      setOptionChoices("");
+    }
+  };
+
+  const deleteOption = (idx) => {
+    const updatedOptions = options.filter((_, index) => index !== idx);
+    setOptions(updatedOptions);
+    updateMenuItem(item.id, "options", updatedOptions);
+  };
+
   return (
     <Draggable draggableId={item.id.toString()} index={index}>
       {(provided, snapshot) => (
@@ -75,6 +100,37 @@ const DraggableMenuItem = ({ item, index, updateMenuItem, deleteMenuItem }) => {
               placeholder="가격"
             />
           </p>
+          {/* 옵션 편집 */}
+          <div className="option-editor">
+            <h4>옵션 설정</h4>
+            {options.map((option, idx) => (
+              <div key={idx} className="option-item">
+                <span>
+                  {option.name}: {option.choices.join(", ")}
+                </span>
+                <button className="option-item-del" onClick={() => deleteOption(idx)}>
+                  삭제
+                </button>
+              </div>
+            ))}
+            <input
+              type="text"
+              value={optionName}
+              onChange={(e) => setOptionName(e.target.value)}
+              placeholder="옵션 이름 (예: 사이즈)"
+              className="menu-item-input"
+            />
+            <input
+              type="text"
+              value={optionChoices}
+              onChange={(e) => setOptionChoices(e.target.value)}
+              placeholder="옵션 선택지 (쉼표로 구분)"
+              className="menu-item-input"
+            />
+            <button onClick={addOption} className="add-option-btn">
+              옵션 추가
+            </button>
+          </div>
         </div>
       )}
     </Draggable>
@@ -88,6 +144,15 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
   const [menuTitle, setMenuTitle] = useState(""); // 메뉴 제목 상태 추가
   const [currentPage, setCurrentPage] = useState(0); // 현재 페이지 번호
 
+  const [selectedItem, setSelectedItem] = useState(null); // 선택된 메뉴 아이템
+  const [selectedOptions, setSelectedOptions] = useState({}); // 선택된 옵션들
+  const [cartItems, setCartItems] = useState([]); // 장바구니 아이템
+  const [showCartPopup, setShowCartPopup] = useState(false); // 장바구니 팝업 표시 여부
+
+  useEffect(() => {
+    // signal 값이 변경될 때 cartItems를 초기화합니다.
+    setCartItems([]);
+  }, [signal]);
   // Firestore에서 데이터 불러오기
   useEffect(() => {
     if (!signal) return; // signal가 없으면 리턴
@@ -146,6 +211,7 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
       name: "새로운 메뉴",
       price: 0,
       image: "",
+      options: [],
     };
     const updatedItems = [...menuItems, newItem];
     setMenuItems(updatedItems);
@@ -318,6 +384,83 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
     await setDoc(kioskDocRef, { menuTitle: newTitle }, { merge: true });
   };
 
+  // 메뉴 아이템 클릭 핸들러
+  const handleMenuItemClick = (item) => {
+    if (isAdminMode) return; // 관리자는 클릭 불가
+    setSelectedItem(item);
+    // 초기 옵션 선택 값 설정
+    const initialOptions = {};
+    item.options &&
+      item.options.forEach((option) => {
+        initialOptions[option.name] = option.choices[0]; // 첫 번째 선택지로 초기화
+      });
+    setSelectedOptions(initialOptions);
+  };
+
+  // 옵션 선택 변경 핸들러
+  const handleOptionChange = (optionName, choice) => {
+    setSelectedOptions({
+      ...selectedOptions,
+      [optionName]: choice,
+    });
+  };
+
+  // 장바구니에 아이템 추가
+  const handleAddToCart = () => {
+    const itemWithSelection = {
+      ...selectedItem,
+      selectedOptions,
+    };
+
+    // 동일한 아이템이 이미 장바구니에 있는지 확인
+    const existingItemIndex = cartItems.findIndex(
+      (cartItem) =>
+        cartItem.id === itemWithSelection.id &&
+        JSON.stringify(cartItem.selectedOptions) === JSON.stringify(itemWithSelection.selectedOptions)
+    );
+
+    if (existingItemIndex > -1) {
+      // 이미 존재하면 수량 증가
+      const updatedCartItems = [...cartItems];
+      updatedCartItems[existingItemIndex].quantity += 1;
+      setCartItems(updatedCartItems);
+    } else {
+      // 새로운 아이템 추가
+      setCartItems([...cartItems, { ...itemWithSelection, quantity: 1 }]);
+    }
+
+    setSelectedItem(null); // 모달 닫기
+  };
+
+  // 장바구니 총액 계산
+  const cartTotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+
+  // 수량 증가
+  const increaseQuantity = (index) => {
+    const updatedCartItems = [...cartItems];
+    updatedCartItems[index].quantity += 1;
+    setCartItems(updatedCartItems);
+  };
+
+  // 수량 감소
+  const decreaseQuantity = (index) => {
+    const updatedCartItems = [...cartItems];
+    if (updatedCartItems[index].quantity > 1) {
+      updatedCartItems[index].quantity -= 1;
+    } else {
+      // 수량이 1이면 아이템 제거
+      updatedCartItems.splice(index, 1);
+    }
+    setCartItems(updatedCartItems);
+  };
+
+  // 장바구니 아이템 삭제
+  const removeCartItem = (index) => {
+    const updatedCartItems = [...cartItems];
+    updatedCartItems.splice(index, 1);
+    setCartItems(updatedCartItems);
+  };
+
   return (
     <div className="kiosk-container">
       {isAdminMode ? (
@@ -336,7 +479,9 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
         {categories.map((category) => (
           <button
             key={category}
-            className={`category-btn ${category === selectedCategory ? "active" : ""}`}
+            className={`category-btn ${
+              category === selectedCategory ? "active" : ""
+            }`}
             onClick={() => handleCategoryChange(category)}
             onDoubleClick={() => isAdminMode && renameCategory(category)}
           >
@@ -430,7 +575,11 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
           >
             <div className="menu-grid">
               {paginatedMenuItems.map((item) => (
-                <div key={item.id} className="menu-item">
+                <div
+                  key={item.id}
+                  className="menu-item"
+                  onClick={() => handleMenuItemClick(item)}
+                >
                   <img
                     src={item.image || "default-image.jpg"}
                     alt={item.name}
@@ -443,6 +592,121 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
             </div>
           </motion.div>
         </AnimatePresence>
+      )}
+
+      {/* 옵션 선택 모달 */}
+      {selectedItem && (
+        <div className="modal">
+          <div className="modal-content">
+            <h2 className="modal-title">{selectedItem.name}</h2>
+            <img
+              src={selectedItem.image || "default-image.jpg"}
+              alt={selectedItem.name}
+              className="modal-image"
+            />
+            <p className="modal-price">₩{selectedItem.price.toLocaleString()}</p>
+            {/* 옵션 선택 UI */}
+            {selectedItem.options &&
+              selectedItem.options.map((option, idx) => (
+                <div key={idx} className="option-group">
+                  <h4>{option.name}</h4>
+                  {option.choices.map((choice, cIdx) => (
+                    <label key={cIdx} className="option-label">
+                      <input
+                        type="radio"
+                        name={option.name}
+                        value={choice}
+                        checked={selectedOptions[option.name] === choice}
+                        onChange={() => handleOptionChange(option.name, choice)}
+                      />
+                      {choice}
+                    </label>
+                  ))}
+                </div>
+              ))}
+            <div className="modal-buttons">
+              <button onClick={handleAddToCart} className="modal-add-btn">
+                장바구니에 담기
+              </button>
+              <button
+                onClick={() => setSelectedItem(null)}
+                className="modal-cancel-btn"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 장바구니 가격 표시 */}
+      {cartItems.length > 0 && (
+        <div className="cart-display" onClick={() => setShowCartPopup(true)}>
+          <p>총 주문 금액: ₩{cartTotal.toLocaleString()}</p>
+        </div>
+      )}
+
+      {/* 장바구니 팝업 */}
+      {showCartPopup && (
+        <div className="modal">
+          <div className="modal-content">
+            <h2 className="modal-title">장바구니</h2>
+            <ul className="cart-item-list">
+              {cartItems.map((item, index) => (
+                <li key={index} className="cart-item">
+                  <div className="cart-item-info">
+                    <span className="cart-item-name">{item.name}</span>
+                    {item.selectedOptions && (
+                      <ul className="selected-options">
+                        {Object.entries(item.selectedOptions).map(
+                          ([optionName, choice], idx) => (
+                            <li key={idx}>
+                              {optionName}: {choice}
+                            </li>
+                          )
+                        )}
+                      </ul>
+                    )}
+                  </div>
+                  <div className="cart-item-actions">
+                    <button
+                      className="quantity-btn"
+                      onClick={() => decreaseQuantity(index)}
+                    >
+                      -
+                    </button>
+                    <span className="cart-item-quantity">{item.quantity}</span>
+                    <button
+                      className="quantity-btn"
+                      onClick={() => increaseQuantity(index)}
+                    >
+                      +
+                    </button>
+                    <button
+                      className="remove-btn"
+                      onClick={() => removeCartItem(index)}
+                    >
+                      x
+                    </button>
+                  </div>
+                  <span className="cart-item-price">
+                    ₩{(item.price * item.quantity).toLocaleString()}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="cart-total">총 합계: ₩{cartTotal.toLocaleString()}</p>
+            <div className="modal-buttons">
+              <button className="modal-add-btn">결제하기</button>
+              <button
+                className="modal-cancel-btn"
+                onClick={() => setShowCartPopup(false)}
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

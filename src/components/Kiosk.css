@@ -1,286 +1,597 @@
+/* Kiosk.css 파일 */
+
 /* Google Fonts 적용 */
 body {
-    font-family: 'Jua', sans-serif;
-    background-color: #f2f2f5;
-    color: #333;
-    margin: 0;
-    padding: 0;
-  }
-  
-  /* 메인 컨테이너 */
-  .kiosk-container {
-    position: relative; /* 애니메이션을 위한 상대 위치 지정 */
-    padding: 30px;
-    background-color: #ebf0f8;
-    border-radius: 12px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    max-width: 900px;
-    margin: 40px auto;
-    text-align: center;
-  }
-  
-  /* 타이틀 스타일 */
-  .kiosk-title {
-    font-size: 34px;
-    font-weight: 600;
-    color: #2a2a35;
-    margin-bottom: 20px;
+  font-family: 'Jua', sans-serif;
+  background-color: #f2f2f5;
+  color: #333;
+  margin: 0;
+  padding: 0;
+}
+
+/* 메인 컨테이너 */
+.kiosk-container {
+  position: relative; /* 애니메이션을 위한 상대 위치 지정 */
+  padding: 30px;
+  background-color: #ebf0f8;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  max-width: 900px;
+  margin: 40px auto;
+  text-align: center;
+}
+
+/* 타이틀 스타일 */
+.kiosk-title {
+  font-size: 34px;
+  font-weight: 600;
+  color: #2a2a35;
+  margin-bottom: 20px;
+}
+
+.kiosk-title-input {
+  font-family: 'Jua', sans-serif;
+  padding: 12px 2px;
+  text-align: center;
+  font-size: 25px;
+  background-color: #e7ebf0;
+  border: 1px solid #e1e6ec;
+  border-radius: 20px;
+  color: rgb(2, 0, 0);
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+  margin-bottom: 25px;
+}
+
+/* 카테고리 선택 */
+.category-selector {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.category-btn {
+  font-family: 'Jua', sans-serif;
+  padding: 12px 18px;
+  font-size: 18px;
+  background-color: #f2f4f8;
+  border: 1px solid #e1e4e8;
+  border-radius: 20px;
+  color: #2a2a35;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.category-btn:hover {
+  background-color: #d1d5db;
+}
+
+.category-btn.active {
+  background-color: #c57e8a;
+  color: #fff;
+}
+
+/* 관리자 모드 버튼 */
+.admin-controls {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  gap: 10px;
+}
+
+.add-menu-btn,
+.add-category-btn,
+.delete-category-btn {
+  font-family: 'Jua', sans-serif;
+  padding: 10px 20px;
+  background-color: #327c99;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s, box-shadow 0.2s;
+}
+
+.add-menu-btn:hover,
+.add-category-btn:hover,
+.delete-category-btn:hover {
+  background-color: #005f87;
+  transform: scale(1.05);
+  box-shadow: 0 5px 10px rgba(0, 91, 187, 0.2);
+}
+
+.admin-tip {
+  font-size: 14px;
+  color: #666;
+  margin-top: 10px;
+}
+
+/* 메뉴 그리드 */
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-top: 20px;
+}
+
+/* 메뉴 카드 */
+.menu-item {
+  position: relative; /* 추가된 부분 */
+  font-family: 'Jua', sans-serif;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 15px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.menu-item:hover {
+  transform: scale(1.02);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.menu-item-image {
+  width: 100%;
+  height: 160px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  object-fit: cover;
+}
+
+/* 관리자 버튼 */
+.admin-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+/* 옵션 편집 컨테이너 */
+.option-editor {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f2f4f8; /* 배경 색상 추가로 섹션 구분 */
+  border-radius: 12px;
+}
+
+/* 옵션 설정 제목 */
+.option-editor h4 {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  color: #2a2a35;
+  text-align: left;
+}
+
+/* 옵션 아이템 */
+.option-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+/* 옵션 아이템 텍스트 */
+.option-item span {
+  font-size: 16px;
+  color: #2a2a35;
+}
+
+/* 옵션 삭제 버튼 */
+.option-item-del {
+  font-family: 'Jua', sans-serif;
+  background-color: #e74c3c;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.option-item-del:hover {
+  background-color: #c0392b;
+}
+
+/* 옵션 입력 필드 */
+.option-editor .menu-item-input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  background-color: #fff;
+}
+
+/* 옵션 추가 버튼 */
+.add-option-btn {
+  font-family: 'Jua', sans-serif;
+  background-color: #3498db;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 15px;
+  width: 100%;
+  transition: background-color 0.3s ease;
+}
+
+.add-option-btn:hover {
+  background-color: #2980b9;
+}
+
+/* 삭제 버튼 */
+.delete-btn {
+  font-family: 'Jua', sans-serif;
+  background-color: #e74c3c;
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.delete-btn:hover {
+  background-color: #c0392b;
+}
+
+.menu-item-name {
+  font-family: 'Jua', sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: #2a2a35;
+  margin-top: 8px;
+}
+
+.menu-item-price {
+  font-family: 'Jua', sans-serif;
+  font-size: 18px;
+  color: #4a4a4a;
+  margin-top: 5px;
+}
+
+/* 관리자 모드 입력 스타일 */
+.menu-item-input {
+  font-family: 'Jua', sans-serif;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  background-color: #f8fafb;
+  margin-top: 10px;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* 페이지네이션 컨트롤 */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.pagination-controls button {
+  font-family: 'Jua', sans-serif;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  transition: transform 0.3s ease;
+}
+
+.pagination-controls button:hover {
+  transform: scale(1.1);
+}
+
+.pagination-controls .active {
+  font-weight: bold;
+  color: #3498db;
+}
+
+/* 애니메이션을 위한 스타일 (Framer Motion과 함께 사용) */
+.motion-div {
+  position: absolute;
+  width: 100%;
+}
+
+/* 반응형 디자인 */
+@media screen and (max-width: 600px) {
+  .menu-grid {
+    grid-template-columns: 1fr;
   }
 
-  
-  .kiosk-title-input {
-    font-family: 'Jua', sans-serif;
-    padding: 12px 2px;
-    text-align: center;
-    font-size: 25px;
-    background-color: #e7ebf0;
-    border: 1px solid #e1e6ec;
-    border-radius: 20px;
-    color: rgb(2, 0, 0);
-    cursor: pointer;
-    transition: background-color 0.3s, color 0.3s;
-    margin-bottom: 25px;
-  }
-  
-  
-  
-  /* 카테고리 선택 */
-  .category-selector {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 25px;
-  }
-  
   .category-btn {
-    font-family: 'Jua', sans-serif;
-    padding: 12px 18px;
-    font-size: 18px;
-    background-color: #f2f4f8;
-    border: 1px solid #e1e4e8;
-    border-radius: 20px;
-    color: #2a2a35;
-    cursor: pointer;
-    transition: background-color 0.3s, color 0.3s;
+    font-size: 16px;
+    padding: 10px 14px;
   }
-  
-  .category-btn:hover {
-    background-color: #d1d5db;
-  }
-  
-  .category-btn.active {
-    background-color: #c57e8a;
-    color: #fff;
-  }
-  
-  /* 관리자 모드 버튼 */
-  .admin-controls {
-    
-    display: flex;
-    justify-content: center;
-    margin-bottom: 20px;
-    gap: 10px;
-  }
-  
+
   .add-menu-btn,
   .add-category-btn,
   .delete-category-btn {
-    font-family: 'Jua', sans-serif;
-    padding: 10px 20px;
-    background-color: #327c99;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s, box-shadow 0.2s;
-  }
-  
-  .add-menu-btn:hover,
-  .add-category-btn:hover,
-  .delete-category-btn:hover {
-    
-    background-color: #005f87;
-    transform: scale(1.05);
-    box-shadow: 0 5px 10px rgba(0, 91, 187, 0.2);
-  }
-  
-  .admin-tip {
-    
     font-size: 14px;
-    color: #666;
-    margin-top: 10px;
+    padding: 8px 16px;
   }
-  
-  /* 메뉴 그리드 */
-  .menu-grid {
-    display: grid;
-    grid-template-columns: repeat(2,  1fr);
-    gap: 20px;
-    margin-top: 20px;
-  }
-  
-  /* 메뉴 카드 */
+
   .menu-item {
-    position: relative; /* 추가된 부분 */
-    font-family: 'Jua', sans-serif;
-    padding: 20px;
-    background-color: #fae1e1;
-    border-radius: 15px;
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    padding: 15px;
   }
-  
-  .menu-item:hover {
-    
-    transform: scale(1.02);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-  }
-  
+
   .menu-item-image {
-    width: 100%;
-    height: 160px;
-    border-radius: 12px;
-    margin-bottom: 15px;
-    object-fit: cover;
+    height: 120px;
   }
-  
-  /* 관리자 버튼 */
-  .admin-buttons {
-    
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  
-  .delete-btn {
-    font-family: 'Jua', sans-serif;
-    background-color: #e74c3c;
-    color: white;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  
-  .delete-btn:hover {
-    background-color: #c0392b;
-  }
-  
+
   .menu-item-name {
-    font-family: 'Jua', sans-serif;
-    font-size: 20px;
-    font-weight: 500;
-    color: #2a2a35;
-    margin-top: 8px;
-  }
-  
-  .menu-item-price {
-    font-family: 'Jua', sans-serif;
     font-size: 18px;
-    color: #4a4a4a;
-    margin-top: 5px;
   }
-  
-  /* 관리자 모드 입력 스타일 */
-  .menu-item-input {
-    font-family: 'Jua', sans-serif;
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
+
+  .menu-item-price {
     font-size: 16px;
-    background-color: #f8fafb;
-    margin-top: 10px;
-    text-align: center;
-    font-weight: 600;
   }
-  
-  /* 페이지네이션 컨트롤 */
-  .pagination-controls {
-    
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    margin-top: 20px;
+
+  /* 옵션 편집 반응형 디자인 */
+  .option-editor {
+    padding: 10px;
   }
-  
-  .pagination-controls button {
-    font-family: 'Jua', sans-serif;
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 20px;
-    transition: transform 0.3s ease;
+
+  .option-editor h4 {
+    font-size: 18px;
   }
-  
-  .pagination-controls button:hover {
-    transform: scale(1.1);
+
+  .option-item span {
+    font-size: 14px;
   }
-  
-  .pagination-controls .active {
-    font-weight: bold;
-    color: #3498db;
+
+  .option-item-del {
+    padding: 4px 8px;
+    font-size: 12px;
   }
-  
-  /* 애니메이션을 위한 스타일 (Framer Motion과 함께 사용) */
-  .motion-div {
-    position: absolute;
-    width: 100%;
+
+  .add-option-btn {
+    font-size: 14px;
+    padding: 10px;
   }
-  
-  /* 반응형 디자인 */
-  @media screen and (max-width: 600px) {
-    .menu-grid {
-      grid-template-columns: 1fr;
-    }
-  
-    .category-btn {
-      font-size: 16px;
-      padding: 10px 14px;
-    }
-  
-    .add-menu-btn,
-    .add-category-btn,
-    .delete-category-btn {
-      font-size: 14px;
-      padding: 8px 16px;
-    }
-  
-    .menu-item {
-      padding: 15px;
-    }
-  
-    .menu-item-image {
-      height: 120px;
-    }
-  
-    .menu-item-name {
-      font-size: 18px;
-    }
-  
-    .menu-item-price {
-      font-size: 16px;
-    }
-  }
-  
-  /* 드래그 아이콘 스타일 */
+}
+
+/* 드래그 아이콘 스타일 */
 .drag-icon {
-    position: relative;
-    top: 5px;
-    right: 5px;
-    font-size: 24px;
-    cursor: grab;
-    color: #888;
-  }
-  
-  /* 드래그 중일 때 스타일 */
-  .menu-item.dragging {
-    background-color: #f0f0f0;
-    opacity: 0.8;
-  }
-  
+  position: relative;
+  top: 5px;
+  right: 5px;
+  font-size: 24px;
+  cursor: grab;
+  color: #888;
+}
+
+/* 드래그 중일 때 스타일 */
+.menu-item.dragging {
+  background-color: #f0f0f0;
+  opacity: 0.8;
+}
+
+/* 모달 배경 */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* 모달 컨텐츠 */
+.modal-content {
+  background-color: #ffffff;
+  border-radius: 15px;
+  padding: 30px;
+  width: 90%;
+  max-width: 600px;
+  text-align: center;
+  position: relative;
+}
+
+/* 모달 제목 */
+.modal-title {
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: #2a2a35;
+}
+
+/* 모달 이미지 */
+.modal-image {
+  width: 30%;
+  height: auto;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+/* 모달 가격 */
+.modal-price {
+  font-size: 22px;
+  color: #e74c3c;
+  margin-bottom: 20px;
+}
+
+/* 옵션 그룹 */
+.option-group {
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+/* 옵션 그룹 제목 */
+.option-group h4 {
+  font-size: 18px;
+  color: #2a2a35;
+  margin-bottom: 10px;
+}
+
+/* 옵션 라벨 */
+.option-label {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 5px;
+}
+
+/* 모달 버튼 그룹 */
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 30px;
+}
+
+/* 모달 내 버튼 스타일 */
+.modal-add-btn,
+.modal-cancel-btn {
+  font-family: 'Jua', sans-serif;
+  padding: 12px 24px;
+  font-size: 18px;
+  border: none;
+  border-radius: 13px;
+  cursor: pointer;
+  flex: 1;
+  margin: 0 10px;
+  transition: background-color 0.3s ease;
+}
+
+.modal-add-btn {
+  background-color: #3498db;
+  color: white;
+}
+
+.modal-add-btn:hover {
+  background-color: #2980b9;
+}
+
+.modal-cancel-btn {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.modal-cancel-btn:hover {
+  background-color: #c0392b;
+}
+
+/* 장바구니 표시 */
+.cart-display {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #3498db;
+  padding: 15px 25px;
+  border-radius: 30px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  font-size: 18px;
+  color: #fff;
+  cursor: pointer;
+  z-index: 100;
+  transition: background-color 0.3s ease;
+}
+
+.cart-display:hover {
+  background-color: #2980b9;
+}
+
+/* 장바구니 팝업 스타일 */
+.cart-item-list {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+  max-height: 300px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.cart-item:last-child {
+  border-bottom: none;
+}
+
+.cart-item-info {
+  flex: 1;
+}
+
+.cart-item-name {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.selected-options {
+  list-style: none;
+  padding: 0;
+  margin: 5px 0 0 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.cart-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.quantity-btn {
+  font-family: 'Jua', sans-serif;
+  background-color: #ddd;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.quantity-btn:hover {
+  background-color: #ccc;
+}
+
+.cart-item-quantity {
+  font-size: 16px;
+  padding: 0 5px;
+}
+
+.remove-btn {
+  font-family: 'Jua', sans-serif;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #e74c3c;
+  margin-left: 10px;
+}
+
+.remove-btn:hover {
+  color: #c0392b;
+}
+
+.cart-item-price {
+  font-size: 18px;
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+.cart-total {
+  font-size: 20px;
+  font-weight: bold;
+  text-align: right;
+  margin-top: 20px;
+}

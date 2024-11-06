@@ -20,8 +20,8 @@ const WaitingScreen = ({ changeStore, userEmail, isAdmin }) => {
         if (docSnapshot.exists()) {
           const signal = docSnapshot.data().signal;
           console.log("Signal value:", signal);
-          if (signal) {
-            // signal 값이 존재하면 storeType과 storeId를 설정하고 키오스크로 이동
+          if (signal && signal !== "0") {
+            // signal 값이 존재하고 "0"이 아니면
             changeStore(signal);
             navigate("/kiosk");
           }

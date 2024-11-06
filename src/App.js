@@ -36,13 +36,12 @@ function App() {
     setIsAdmin(isAdminStatus); // isAdmin 설정
     setEmail(emailValue);
     setIsWaiting(true); // 모든 사용자에 대해 isWaiting을 true로 설정
-    setStoreId(storeIdValue);
   };
 
   // 대기 화면에서 가게 선택 시 호출
   const changeStore = (storeIdValue) => {
-    // setStoreId(storeIdValue); // storeId 업데이트
-    setIsWaiting(false); // 선택 후 대기 화면 해제
+    setStoreId(storeIdValue); // storeId 업데이트
+    // setIsWaiting(false); // 이 부분을 제거합니다.
   };
 
   // Firestore의 signal 값 변화를 감지
@@ -53,6 +52,16 @@ function App() {
         if (doc.exists()) {
           const data = doc.data();
           setSignal(data.signal);
+          setStoreId(data.storeId);
+          // signal 값이 변경되면 isAdminMode를 false로 설정
+          setIsAdminMode(false);
+
+          // signal 값에 따라 isWaiting 상태를 업데이트
+          if (data.signal === "0") {
+            setIsWaiting(true);
+          } else {
+            setIsWaiting(false);
+          }
         }
       });
       return () => unsubscribe();
@@ -98,27 +107,32 @@ function App() {
             path="/kiosk"
             element={
               !isWaiting ? (
-                <div>
-                  {isAdmin && (
-                    <>
-                      {console.log("isAdmin:", isAdmin)}
-                      {console.log("signal:", signal)}
-                      {console.log("storeId:", storeId)}
-                      {console.log("signal === storeId:", String(signal) === String(storeId))}
-                      {console.log("isAdmin && storeId === signal", isAdmin && String(storeId) === signal)}
-                    </>
-                  )}
-                  {isAdmin && String(storeId) === signal && (
-                    <button className="toggle-mode-btn" onClick={toggleMode}>
-                      {isAdminMode ? "사용자 모드로 전환" : "관리자 모드로 전환"}
-                    </button>
-                  )}
-                  <CafeKiosk
-                    isAdminMode={isAdminMode}
-                    userEmail={email}
-                    signal={signal}
-                  />
-                </div>
+                signal === "0" ? (
+                  // Issue 2 해결: signal 값이 "0"이면 WaitingScreen으로 이동
+                  <Navigate to="/waiting" replace />
+                ) : (
+                  <div>
+                    {isAdmin && (
+                      <>
+                        {console.log("isAdmin:", isAdmin)}
+                        {console.log("signal:", signal)}
+                        {console.log("storeId:", storeId)}
+                        {console.log("signal === storeId:", String(signal) === String(storeId))}
+                        {console.log("isAdmin && storeId === signal", isAdmin && String(storeId) === signal)}
+                      </>
+                    )}
+                    {isAdmin && String(storeId) === signal && (
+                      <button className="toggle-mode-btn" onClick={toggleMode}>
+                        {isAdminMode ? "사용자 모드로 전환" : "관리자 모드로 전환"}
+                      </button>
+                    )}
+                    <CafeKiosk
+                      isAdminMode={isAdminMode}
+                      userEmail={email}
+                      signal={signal}
+                    />
+                  </div>
+                )
               ) : (
                 <Navigate to="/" replace />
               )
