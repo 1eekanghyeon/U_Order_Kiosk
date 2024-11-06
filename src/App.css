@@ -215,11 +215,11 @@ button.google-btn:hover {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 100%;
+  width: 93%;
   max-width: 400px;
   margin: auto;
   padding: 20px;
-  background-color: white;
+  background-color: rgb(236, 236, 247);
   border-radius: 10px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
   text-align: center;

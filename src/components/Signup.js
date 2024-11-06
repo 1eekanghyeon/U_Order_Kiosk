@@ -1,7 +1,9 @@
+// Signup.js
+
 import React, { useState, useEffect } from "react";
 import { auth, db } from "../firebase";
-import { createUserWithEmailAndPassword, sendEmailVerification} from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import { doc, setDoc, getDoc, collection, getDocs } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
 const Signup = () => {
@@ -13,27 +15,36 @@ const Signup = () => {
     confirmPassword: "",
     uwbMac: "",
     isAdmin: false,
+    signal: "",
   });
 
-  const [emailVerified, setEmailVerified] = useState(false); // 이메일 인증 상태
-  const [emailVerificationSent, setEmailVerificationSent] = useState(false); // 인증 이메일 전송 상태
-  const [errorMessage, setErrorMessage] = useState(""); // 오류 메시지
-  const [showPopup, setShowPopup] = useState(false); // 팝업 메시지 표시 상태
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [emailVerificationSent, setEmailVerificationSent] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
   const navigate = useNavigate();
 
   // 이메일 인증 상태 주기적으로 확인하는 타이머 설정
   useEffect(() => {
     const checkEmailVerification = setInterval(() => {
       if (auth.currentUser) {
-        auth.currentUser.reload().then(() => {
-          setEmailVerified(auth.currentUser.emailVerified);
-        });
+        auth.currentUser.reload()
+          .then(() => {
+            setEmailVerified(auth.currentUser.emailVerified);
+          })
+          .catch((error) => {
+            console.error('Error reloading user:', error);
+            if (error.code === 'auth/user-token-expired') {
+              // 토큰이 만료된 경우 로그아웃 및 로그인 페이지로 이동
+              auth.signOut();
+              navigate('/login');
+            }
+          });
       }
-    }, 5000); // 5초마다 상태 확인
+    }, 5000);
 
-    return () => clearInterval(checkEmailVerification); // 컴포넌트 언마운트 시 타이머 정리
-  }, []);
-
+    return () => clearInterval(checkEmailVerification);
+  }, [navigate]);
   // 입력 필드 핸들러
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -51,9 +62,9 @@ const Signup = () => {
 
   // 이메일 인증 보내기 핸들러
   const handleSendVerificationEmail = async () => {
-    // 모든 필드가 입력되지 않으면 팝업 메시지 표시
-    if (!formData.email || !formData.name || !formData.id || !formData.password || !formData.confirmPassword || !formData.uwbMac) {
-      setErrorMessage("나머지 정보를 전부 입력하고 이메일 인증을 눌러주세요.");
+    // 이메일과 비밀번호가 입력되었는지 확인
+    if (!formData.email || !formData.password) {
+      setErrorMessage("이메일과 비밀번호를 입력하고 인증 이메일을 보내주세요.");
       setShowPopup(true);
       return;
     }
@@ -64,40 +75,50 @@ const Signup = () => {
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
-      setErrorMessage("비밀번호가 일치하지 않습니다.");
-      setShowPopup(true);
-      return;
-    }
-
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         formData.email,
         formData.password
       );
-      
+
       // 이메일 인증 보내기
       await sendEmailVerification(userCredential.user);
-      setEmailVerificationSent(true); // 인증 이메일 전송 상태 설정
+      setEmailVerificationSent(true);
       alert("이메일 인증 링크가 발송되었습니다. 이메일을 확인하세요.");
     } catch (error) {
-        if (error.code === "auth/email-already-in-use") {
-          // 이미 사용 중인 이메일일 때 처리
-          setErrorMessage("이미 사용된 이메일입니다.");
-          setShowPopup(true);
-        } else {
-          console.error("인증 이메일 전송 오류:", error);
-          setErrorMessage("인증 이메일 전송 중 오류가 발생했습니다.");
-          setShowPopup(true);
-        }
+      if (error.code === "auth/email-already-in-use") {
+        setErrorMessage("이미 사용된 이메일입니다.");
+        setShowPopup(true);
+      } else {
+        console.error("인증 이메일 전송 오류:", error);
+        setErrorMessage("인증 이메일 전송 중 오류가 발생했습니다.");
+        setShowPopup(true);
       }
+    }
   };
 
   // 회원가입 제출 핸들러
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const { email, name, id, password, confirmPassword, uwbMac } = formData;
+
+    // 입력 필드 검증
+    if (!email || !name || !id || !password || !confirmPassword || !uwbMac) {
+      setErrorMessage("모든 필드를 입력해 주세요.");
+      setShowPopup(true);
+      return;
+    }
+
+    // 비밀번호 일치 여부 확인
+    if (password !== confirmPassword) {
+      setErrorMessage("비밀번호가 일치하지 않습니다.");
+      setShowPopup(true);
+      return;
+    }
+
+    // 이메일 인증 여부 확인
     if (!emailVerificationSent || !emailVerified) {
       setErrorMessage("이메일 인증을 완료해 주세요.");
       setShowPopup(true);
@@ -105,23 +126,47 @@ const Signup = () => {
     }
 
     try {
-      // Firestore에 이메일을 문서 ID로 저장 (이메일로 사용자 확인)
+      // Firestore에 사용자 정보 저장 (기존 코드 유지)
       const userDocRef = doc(db, "users", formData.email);
       const userDoc = await getDoc(userDocRef);
 
+      let storeId = null;
+
       if (!userDoc.exists()) {
+        // 관리자인 경우 고유한 매장 ID 부여
+        if (formData.isAdmin) {
+          // 현재 존재하는 매장 ID들을 가져와서 새로운 ID 생성
+          const kioskCollectionRef = collection(db, "kiosk");
+          const kioskDocs = await getDocs(kioskCollectionRef);
+          const existingStoreIds = kioskDocs.docs
+            .map((doc) => parseInt(doc.id))
+            .filter(Number.isInteger);
+          storeId =
+            existingStoreIds.length > 0 ? Math.max(...existingStoreIds) + 1 : 1;
+
+          // 해당 매장 ID로 kiosk 컬렉션에 문서 생성
+          const kioskDocRef = doc(db, "kiosk", storeId.toString());
+          await setDoc(kioskDocRef, {
+            categories: ["카테고리1", "카테고리2", "카테고리3"],
+            menuItems: [],
+          });
+        }
+
         // Firestore에 사용자 추가 정보 저장
-        await setDoc(doc(db, "users", formData.email), {
+        await setDoc(userDocRef, {
           email: formData.email,
           name: formData.name,
           id: formData.id,
           uwbMac: formData.uwbMac,
           isAdmin: formData.isAdmin,
+          signal: "",
+          storeId: storeId,
         });
       }
 
       alert("회원가입이 완료되었습니다!");
-      navigate("/login"); // 회원가입 후 로그인 페이지로 이동
+      auth.signOut();
+      navigate("/login");
     } catch (error) {
       console.error("회원가입 중 오류:", error);
       setErrorMessage("회원가입 중 오류가 발생했습니다. 다시 시도해 주세요.");
@@ -139,7 +184,6 @@ const Signup = () => {
             name="email"
             value={formData.email}
             onChange={handleChange}
-            required
           />
           <button
             type="button"
@@ -148,9 +192,10 @@ const Signup = () => {
           >
             {emailVerificationSent ? "인증 이메일 발송됨" : "인증 이메일 보내기"}
           </button>
-          {/* 이메일 인증 완료 시 초록색 체크 표시 및 메시지 */}
           {emailVerificationSent && emailVerified && (
-            <span style={{ color: "green", marginLeft: "10px" }}>✔ 이메일 인증에 성공했습니다</span>
+            <span style={{ color: "green", marginLeft: "10px" }}>
+              ✔ 이메일 인증에 성공했습니다
+            </span>
           )}
         </div>
         <div>
@@ -160,7 +205,6 @@ const Signup = () => {
             name="name"
             value={formData.name}
             onChange={handleChange}
-            required
           />
         </div>
         <div>
@@ -170,7 +214,6 @@ const Signup = () => {
             name="id"
             value={formData.id}
             onChange={handleChange}
-            required
           />
         </div>
         <div>
@@ -180,7 +223,6 @@ const Signup = () => {
             name="password"
             value={formData.password}
             onChange={handleChange}
-            required
           />
         </div>
         <div>
@@ -190,7 +232,6 @@ const Signup = () => {
             name="confirmPassword"
             value={formData.confirmPassword}
             onChange={handleChange}
-            required
           />
         </div>
         <div>
@@ -200,7 +241,6 @@ const Signup = () => {
             name="uwbMac"
             value={formData.uwbMac}
             onChange={handleChange}
-            required
           />
         </div>
         <div>
@@ -212,12 +252,11 @@ const Signup = () => {
             onChange={handleChange}
           />
         </div>
-        <button type="submit" disabled={!emailVerified}>
+        <button type="submit">
           Sign Up
         </button>
       </form>
 
-      {/* 팝업 메시지 */}
       {showPopup && (
         <div className="popup-overlay">
           <div className="popup-message">
