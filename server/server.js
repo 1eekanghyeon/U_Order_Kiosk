@@ -12,7 +12,7 @@ app.use(express.json());
 // 카카오페이 API 키와 상점 정보
 const ADMIN_KEY = '298058d014e67c5a75121167f448a127'; // 발급받은 어드민 키로 교체하세요
 const CID = 'TC0ONETIME'; // 테스트용 CID입니다.
-const NGROK_URL = 'https://dd81-168-131-224-57.ngrok-free.app'; // ngrok 출력에서 받은 HTTPS URL
+const NGROK_URL = 'https://ffe4-168-131-224-57.ngrok-free.app'; // ngrok 출력에서 받은 HTTPS URL
 // 결제 준비 요청 처리 엔드포인트
 app.post('/api/payments/ready', async (req, res) => {
   const { cartItems, totalAmount } = req.body;
