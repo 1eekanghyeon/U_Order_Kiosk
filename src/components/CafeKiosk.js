@@ -7,7 +7,7 @@ import { db, storage } from "../firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { AnimatePresence, motion } from "framer-motion";
-
+import { BACKEND_URL } from './config';
 // 한 페이지에 표시할 메뉴 수
 const ITEMS_PER_PAGE = 4;
 
@@ -149,9 +149,8 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
   const [cartItems, setCartItems] = useState([]); // 장바구니 아이템
   const [showCartPopup, setShowCartPopup] = useState(false); // 장바구니 팝업 표시 여부
 
-  // 추가된 상태 변수
-  const [showOrderDetailsPopup, setShowOrderDetailsPopup] = useState(false);
-  const [lastOrderDetails, setLastOrderDetails] = useState(null);
+  const [showLastOrderPopup, setShowLastOrderPopup] = useState(false); // 이전 주문 내역 팝업 표시 여부
+  const [lastOrder, setLastOrder] = useState(null); // 이전 주문 내역
 
   useEffect(() => {
     // signal 값이 변경될 때 cartItems를 초기화합니다.
@@ -195,11 +194,11 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
     fetchData();
   }, [signal, isAdminMode]);
 
-  // 로컬 스토리지에서 이전 주문 내역 불러오기
+  // 컴포넌트 마운트 시 이전 주문 내역 로드
   useEffect(() => {
-    const orderDetails = JSON.parse(localStorage.getItem("orderDetails"));
-    if (orderDetails) {
-      setLastOrderDetails(orderDetails);
+    const storedOrder = localStorage.getItem('lastOrder');
+    if (storedOrder) {
+      setLastOrder(JSON.parse(storedOrder));
     }
   }, []);
 
@@ -408,12 +407,6 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
         initialOptions[option.name] = option.choices[0]; // 첫 번째 선택지로 초기화
       });
     setSelectedOptions(initialOptions);
-
-    // 새로운 주문 시작 시 이전 주문 내역 삭제
-    if (lastOrderDetails) {
-      setLastOrderDetails(null);
-      localStorage.removeItem("orderDetails");
-    }
   };
 
   // 옵션 선택 변경 핸들러
@@ -435,8 +428,7 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
     const existingItemIndex = cartItems.findIndex(
       (cartItem) =>
         cartItem.id === itemWithSelection.id &&
-        JSON.stringify(cartItem.selectedOptions) ===
-          JSON.stringify(itemWithSelection.selectedOptions)
+        JSON.stringify(cartItem.selectedOptions) === JSON.stringify(itemWithSelection.selectedOptions)
     );
 
     if (existingItemIndex > -1) {
@@ -481,36 +473,47 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
     setCartItems(updatedCartItems);
   };
 
+    // CafeKiosk.js에서 주문 내역 저장
+  const orderDetails = {
+    cartItems,
+    cartTotal,
+  };
+  localStorage.setItem('orderDetails', JSON.stringify(orderDetails));
+
+
+  // 결제하기 함수 수정 (백엔드 URL을 실제 도메인으로 변경해야 함)
   const handlePayment = async () => {
     try {
-      // 결제 전에 주문 내역을 로컬 스토리지에 저장
-      localStorage.setItem(
-        "orderDetails",
-        JSON.stringify({ cartItems, cartTotal })
-      );
+      // 결제 전에 주문 내역과 총 금액을 로컬 스토리지에 저장
+      const orderDetails = {
+        cartItems,
+        cartTotal,
+      };
+      localStorage.setItem('orderDetails', JSON.stringify(orderDetails));
 
-      // 백엔드 url 설정
-      const response = await fetch(
-        "https://79ca-168-131-224-57.ngrok-free.app/api/payments/ready",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ cartItems, totalAmount: cartTotal }),
-        }
-      );
+      // partner_order_id 생성 및 저장
+      const partner_order_id = `order_${Date.now()}`;
+      localStorage.setItem('partner_order_id', partner_order_id);
+
+      // 결제 준비 요청에 partner_order_id 포함
+      const response = await fetch(`${BACKEND_URL}/api/payments/ready`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cartItems, totalAmount: cartTotal, partner_order_id }),
+      });
 
       const data = await response.json();
 
       // 결제 고유 번호(tid)를 로컬 스토리지에 저장합니다.
-      localStorage.setItem("tid", data.tid);
+      localStorage.setItem('tid', data.tid);
 
       // 카카오페이 결제 페이지로 리다이렉션합니다.
       window.location.href = data.next_redirect_pc_url;
     } catch (error) {
-      console.error("결제 준비 중 오류가 발생했습니다.", error);
-      alert("결제 준비 중 오류가 발생했습니다.");
+      console.error('결제 준비 중 오류가 발생했습니다.', error);
+      alert('결제 준비 중 오류가 발생했습니다.');
     }
   };
 
@@ -692,26 +695,35 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
         </div>
       )}
 
-      {/* 주문 내역 확인 버튼 */}
-      {lastOrderDetails && (
-        <div
-          className="order-details-button"
-          onClick={() => setShowOrderDetailsPopup(true)}
-        >
-          주문 내역 확인
+      {/* 장바구니 가격 표시 */}
+      {cartItems.length > 0 && (
+        <div className="cart-display" onClick={() => setShowCartPopup(true)}>
+          <p>총 주문 금액: ₩{cartTotal.toLocaleString()}</p>
         </div>
       )}
 
-      {/* 주문 내역 팝업 */}
-      {showOrderDetailsPopup && (
+      {/* 이전 주문 내역 버튼 */}
+      {lastOrder && (
+        <button
+          className="last-order-btn"
+          onClick={() => setShowLastOrderPopup(true)}
+        >
+          이전 주문 내역 확인
+        </button>
+      )}
+
+      {/* 이전 주문 내역 팝업 */}
+      {showLastOrderPopup && (
         <div className="modal">
           <div className="modal-content">
-            <h2 className="modal-title">주문 내역</h2>
-            <ul className="cart-item-list">
-              {lastOrderDetails.cartItems.map((item, index) => (
-                <li key={index} className="cart-item">
-                  <div className="cart-item-info">
-                    <span className="cart-item-name">{item.name}</span>
+            <h2 className="modal-title">이전 주문 내역</h2>
+            <p>주문 번호: <strong>{lastOrder.orderNumber}</strong></p>
+            <p>주문 날짜: {lastOrder.orderDate}</p>
+            <ul className="order-item-list">
+              {lastOrder.orderItems.map((item, index) => (
+                <li key={index} className="order-item">
+                  <div className="order-item-info">
+                    <span className="order-item-name">{item.name}</span>
                     {item.selectedOptions && (
                       <ul className="selected-options">
                         {Object.entries(item.selectedOptions).map(
@@ -724,32 +736,23 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
                       </ul>
                     )}
                   </div>
-                  <span className="cart-item-quantity">수량: {item.quantity}</span>
-                  <span className="cart-item-price">
+                  <span className="order-item-quantity">수량: {item.quantity}</span>
+                  <span className="order-item-price">
                     ₩{(item.price * item.quantity).toLocaleString()}
                   </span>
                 </li>
               ))}
             </ul>
-            <p className="cart-total">
-              총 합계: ₩{lastOrderDetails.cartTotal.toLocaleString()}
-            </p>
+            <p className="order-total">총 합계: ₩{Number(lastOrder.totalAmount).toLocaleString()}</p>
             <div className="modal-buttons">
               <button
                 className="modal-cancel-btn"
-                onClick={() => setShowOrderDetailsPopup(false)}
+                onClick={() => setShowLastOrderPopup(false)}
               >
                 닫기
               </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* 장바구니 가격 표시 */}
-      {cartItems.length > 0 && (
-        <div className="cart-display" onClick={() => setShowCartPopup(true)}>
-          <p>총 주문 금액: ₩{cartTotal.toLocaleString()}</p>
         </div>
       )}
 
@@ -807,7 +810,6 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
               <button className="modal-add-btn" onClick={handlePayment}>
                 결제하기
               </button>
-
               <button
                 className="modal-cancel-btn"
                 onClick={() => setShowCartPopup(false)}

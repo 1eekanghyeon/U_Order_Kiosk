@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./PaymentResult.css"; // 스타일링을 위한 CSS 파일 임포트
 import { v4 as uuidv4 } from "uuid"; // 주문 번호 생성을 위한 UUID 라이브러리
+import { BACKEND_URL } from './config';
 
 const PaymentResult = () => {
   const location = useLocation();
@@ -16,31 +17,34 @@ const PaymentResult = () => {
   useEffect(() => {
     const query = new URLSearchParams(location.search);
     const pg_token = query.get("pg_token");
+    const tid = localStorage.getItem("tid");
+    const partner_order_id = localStorage.getItem('partner_order_id');
 
-    if (pg_token) {
-      // 로컬 스토리지에서 tid를 가져옵니다.
-      const tid = localStorage.getItem("tid");
-
-      // 백엔드 url 설정
-      fetch("https://79ca-168-131-224-57.ngrok-free.app/api/payments/approve", {
+    if (pg_token && tid && partner_order_id) {
+      // 백엔드로 결제 승인 요청
+      fetch(`${BACKEND_URL}/api/payments/approve`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ tid, pg_token }),
+        body: JSON.stringify({ tid, pg_token, partner_order_id }),
       })
-        .then((res) => res.json())
-        .then((data) => {
+        .then(async (res) => {
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data.message || '결제 승인 중 오류가 발생했습니다.');
+          }
+
           // 결제 성공 처리
           console.log("결제 성공:", data);
-          alert("결제가 성공적으로 완료되었습니다.");
 
           // 주문 번호 생성
           const newOrderNumber = generateOrderNumber();
           setOrderNumber(newOrderNumber);
 
-          // 로컬 스토리지에서 주문 내역을 가져옵니다.
-          const orderDetails = JSON.parse(localStorage.getItem("orderDetails"));
+          // 주문 내역 불러오기
+          const orderDetails = JSON.parse(localStorage.getItem('orderDetails'));
           if (orderDetails) {
             setCartItems(orderDetails.cartItems);
             setCartTotal(orderDetails.cartTotal);
@@ -49,13 +53,14 @@ const PaymentResult = () => {
           // 팝업 표시
           setShowPopup(true);
 
-          // 필요한 경우 상태 초기화 등 추가 작업 수행
-          localStorage.removeItem("tid");
+          // 로컬 스토리지 정리
+          localStorage.removeItem('tid');
+          localStorage.removeItem("partner_order_id");
           localStorage.removeItem("orderDetails");
         })
         .catch((error) => {
           console.error("결제 승인 중 오류가 발생했습니다.", error);
-          alert("결제 승인 중 오류가 발생했습니다.");
+          alert("결제 승인 중 오류가 발생했습니다. 다시 시도해주세요.");
           navigate("/kiosk");
         });
     } else {

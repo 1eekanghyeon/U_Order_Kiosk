@@ -12,18 +12,23 @@ app.use(express.json());
 // 카카오페이 API 키와 상점 정보
 const ADMIN_KEY = '298058d014e67c5a75121167f448a127'; // 발급받은 어드민 키로 교체하세요
 const CID = 'TC0ONETIME'; // 테스트용 CID입니다.
-const NGROK_URL = 'https://b320-168-131-224-57.ngrok-free.app'; // 프론트 엔드 url 설정
+const NGROK_URL = 'https://3ae8-168-131-224-57.ngrok-free.app'; // ngrok 출력에서 받은 HTTPS URL
+
 // 결제 준비 요청 처리 엔드포인트
 app.post('/api/payments/ready', async (req, res) => {
-  const { cartItems, totalAmount } = req.body;
+  const { cartItems, totalAmount, partner_order_id } = req.body;
 
   try {
+    // item_name과 quantity 설정
+    const item_names = cartItems.map(item => item.name).join(', ');
+    const total_quantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
     const params = {
       cid: CID,
-      partner_order_id: 'partner_order_id',
+      partner_order_id,
       partner_user_id: 'partner_user_id',
-      item_name: '주문 상품', // 실제 상품명으로 교체하세요
-      quantity: 1,
+      item_name: item_names.substring(0, 100), // 최대 100자까지 허용되므로 잘라냄
+      quantity: total_quantity,
       total_amount: totalAmount,
       vat_amount: 0,
       tax_free_amount: 0,
@@ -44,25 +49,30 @@ app.post('/api/payments/ready', async (req, res) => {
     );
 
     // 결제 준비 응답에서 tid와 결제 페이지 URL을 프론트엔드로 전달합니다.
+    console.log('카카오페이 결제 준비 응답:', response.data); // 로그 추가
     res.json({
       tid: response.data.tid,
       next_redirect_pc_url: response.data.next_redirect_pc_url,
     });
   } catch (error) {
-    console.error(error.response.data);
-    res.status(500).send('결제 준비 중 오류가 발생했습니다.');
+    console.error('카카오페이 결제 준비 중 오류:', error.response ? error.response.data : error.message);
+    res.status(500).json({ message: '결제 준비 중 오류가 발생했습니다.', error: error.response ? error.response.data : error.message });
   }
 });
 
 // 결제 승인 요청 처리 엔드포인트
 app.post('/api/payments/approve', async (req, res) => {
-  const { tid, pg_token } = req.body;
+  const { tid, pg_token, partner_order_id } = req.body; // partner_order_id 추가
 
   try {
+    if (!tid) {
+      throw new Error('tid가 전달되지 않았습니다.');
+    }
+
     const params = {
       cid: CID,
       tid,
-      partner_order_id: 'partner_order_id',
+      partner_order_id,
       partner_user_id: 'partner_user_id',
       pg_token,
     };
@@ -78,10 +88,11 @@ app.post('/api/payments/approve', async (req, res) => {
       }
     );
 
+    console.log('카카오페이 결제 승인 응답:', response.data); // 로그 추가
     res.json(response.data);
   } catch (error) {
-    console.error(error.response.data);
-    res.status(500).send('결제 승인 중 오류가 발생했습니다.');
+    console.error('카카오페이 결제 승인 중 오류:', error.response ? error.response.data : error.message);
+    res.status(500).json({ message: '결제 승인 중 오류가 발생했습니다.', error: error.response ? error.response.data : error.message });
   }
 });
 
