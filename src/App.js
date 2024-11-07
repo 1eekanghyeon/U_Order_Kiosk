@@ -11,21 +11,20 @@ import Login from "./components/Login";
 import Signup from "./components/Signup";
 import CafeKiosk from "./components/CafeKiosk";
 import WaitingScreen from "./components/WaitingScreen";
-import './App.css';
-import logo from './assets/logo.png';
-import PaymentResult from './components/PaymentResult';
-
+import "./App.css";
+import logo from "./assets/logo.png";
+import PaymentResult from "./components/PaymentResult";
 
 // Firestore 관련 import 추가
-import { db } from './firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from "./firebase";
+import { doc, onSnapshot } from "firebase/firestore";
 
 function App() {
   const [storeId, setStoreId] = useState(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isWaiting, setIsWaiting] = useState(false);
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [signal, setSignal] = useState(null); // signal 상태 추가
 
   // 관리자 모드 토글
@@ -43,19 +42,18 @@ function App() {
 
   // 대기 화면에서 가게 선택 시 호출
   const changeStore = (storeIdValue) => {
-    
     // setIsWaiting(false); // 이 부분을 제거합니다.
   };
 
   // Firestore의 signal 값 변화를 감지
   useEffect(() => {
     if (email) {
-      const userDocRef = doc(db, 'users', email);
+      const userDocRef = doc(db, "users", email);
       const unsubscribe = onSnapshot(userDocRef, (doc) => {
         if (doc.exists()) {
           const data = doc.data();
           setSignal(data.signal);
-          
+
           // signal 값이 변경되면 isAdminMode를 false로 설정
           setIsAdminMode(false);
 
@@ -77,9 +75,9 @@ function App() {
         <img src={logo} alt="U-Order Logo" className="app-logo" />
 
         <Routes>
-        <Route path="/payments/success" element={<PaymentResult />} />
-        <Route path="/payments/cancel" element={<PaymentResult />} />
-        <Route path="/payments/fail" element={<PaymentResult />} />
+          <Route path="/payments/success" element={<PaymentResult />} />
+          <Route path="/payments/cancel" element={<PaymentResult />} />
+          <Route path="/payments/fail" element={<PaymentResult />} />
 
           <Route
             path="/"
@@ -115,19 +113,9 @@ function App() {
             element={
               !isWaiting ? (
                 signal === "0" ? (
-                  // Issue 2 해결: signal 값이 "0"이면 WaitingScreen으로 이동
                   <Navigate to="/waiting" replace />
                 ) : (
                   <div>
-                    {isAdmin && (
-                      <>
-                        {console.log("isAdmin:", isAdmin)}
-                        {console.log("signal:", signal)}
-                        {console.log("storeId:", storeId)}
-                        {console.log("signal === storeId:", String(signal) === String(storeId))}
-                        {console.log("isAdmin && storeId === signal", isAdmin && String(storeId) === signal)}
-                      </>
-                    )}
                     {isAdmin && String(storeId) === signal && (
                       <button className="toggle-mode-btn" onClick={toggleMode}>
                         {isAdminMode ? "사용자 모드로 전환" : "관리자 모드로 전환"}
