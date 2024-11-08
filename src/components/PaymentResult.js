@@ -48,6 +48,16 @@ const PaymentResult = () => {
           if (orderDetails) {
             setCartItems(orderDetails.cartItems);
             setCartTotal(orderDetails.cartTotal);
+
+            // 주문 내역을 lastOrder로 저장
+            const orderDate = new Date().toLocaleString();
+            const lastOrder = {
+              orderNumber: newOrderNumber,
+              orderDate,
+              orderItems: orderDetails.cartItems,
+              totalAmount: orderDetails.cartTotal,
+            };
+            localStorage.setItem('lastOrder', JSON.stringify(lastOrder));
           }
 
           // 팝업 표시
@@ -80,7 +90,7 @@ const PaymentResult = () => {
   // 팝업 닫기 핸들러
   const handleClosePopup = () => {
     setShowPopup(false);
-    // 메인 페이지 또는 원하는 페이지로 이동
+    // 키오스크 페이지로 이동
     navigate("/kiosk");
   };
 

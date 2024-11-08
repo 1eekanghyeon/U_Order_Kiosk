@@ -20,11 +20,17 @@ import { db } from "./firebase";
 import { doc, onSnapshot } from "firebase/firestore";
 
 function App() {
-  const [storeId, setStoreId] = useState(null);
+  const [storeId, setStoreId] = useState(
+    localStorage.getItem("storeId") || null
+  );
   const [isAdminMode, setIsAdminMode] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isWaiting, setIsWaiting] = useState(false);
-  const [email, setEmail] = useState("");
+  const [isAdmin, setIsAdmin] = useState(
+    localStorage.getItem("isAdmin") === "true"
+  );
+  const [isWaiting, setIsWaiting] = useState(
+    localStorage.getItem("isWaiting") === "true"
+  );
+  const [email, setEmail] = useState(localStorage.getItem("email") || "");
   const [signal, setSignal] = useState(null); // signal 상태 추가
 
   // 관리자 모드 토글
@@ -38,12 +44,18 @@ function App() {
     setEmail(emailValue);
     setStoreId(storeIdValue); // storeId 설정
     setIsWaiting(true); // 모든 사용자에 대해 isWaiting을 true로 설정
+
+    // localStorage에 저장
+    localStorage.setItem("isAdmin", isAdminStatus);
+    localStorage.setItem("email", emailValue);
+    localStorage.setItem("storeId", storeIdValue);
+    localStorage.setItem("isWaiting", "true");
   };
 
-  // 대기 화면에서 가게 선택 시 호출
-  const changeStore = (storeIdValue) => {
-    // setIsWaiting(false); // 이 부분을 제거합니다.
-  };
+  // isWaiting 값 변경 시 localStorage에 저장
+  useEffect(() => {
+    localStorage.setItem("isWaiting", isWaiting ? "true" : "false");
+  }, [isWaiting]);
 
   // Firestore의 signal 값 변화를 감지
   useEffect(() => {
@@ -99,7 +111,7 @@ function App() {
             element={
               isWaiting ? (
                 <WaitingScreen
-                  changeStore={changeStore}
+                  changeStore={() => {}}
                   userEmail={email}
                   isAdmin={isAdmin}
                 />
@@ -111,25 +123,23 @@ function App() {
           <Route
             path="/kiosk"
             element={
-              !isWaiting ? (
-                signal === "0" ? (
-                  <Navigate to="/waiting" replace />
-                ) : (
-                  <div>
-                    {isAdmin && String(storeId) === signal && (
-                      <button className="toggle-mode-btn" onClick={toggleMode}>
-                        {isAdminMode ? "사용자 모드로 전환" : "관리자 모드로 전환"}
-                      </button>
-                    )}
-                    <CafeKiosk
-                      isAdminMode={isAdminMode}
-                      userEmail={email}
-                      signal={signal}
-                    />
-                  </div>
-                )
+              isWaiting ? (
+                <Navigate to="/waiting" replace />
+              ) : signal === "0" ? (
+                <Navigate to="/waiting" replace />
               ) : (
-                <Navigate to="/" replace />
+                <div>
+                  {isAdmin && String(storeId) === signal && (
+                    <button className="toggle-mode-btn" onClick={toggleMode}>
+                      {isAdminMode ? "사용자 모드로 전환" : "관리자 모드로 전환"}
+                    </button>
+                  )}
+                  <CafeKiosk
+                    isAdminMode={isAdminMode}
+                    userEmail={email}
+                    signal={signal}
+                  />
+                </div>
               )
             }
           />

@@ -595,3 +595,22 @@ body {
   text-align: right;
   margin-top: 20px;
 }
+/* Kiosk.css */
+
+/* 주문 영수증 버튼 스타일 */
+.receipt-btn {
+  font-family: 'Jua', sans-serif;
+  position: fixed;
+  bottom: 40px; /* 장바구니 버튼 위에 위치하도록 */
+  right: 20px;
+  padding: 10px 20px;
+  background-color: #ff9800;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.receipt-btn:hover {
+  background-color: #e68a00;
+}

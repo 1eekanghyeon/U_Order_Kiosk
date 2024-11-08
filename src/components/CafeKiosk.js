@@ -201,7 +201,7 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
       setLastOrder(JSON.parse(storedOrder));
     }
   }, []);
-
+  const [showReceiptPopup, setShowReceiptPopup] = useState(false);
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
     setCurrentPage(0); // currentPage를 0으로 재설정
@@ -516,7 +516,9 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
       alert('결제 준비 중 오류가 발생했습니다.');
     }
   };
-
+   const handleCloseReceiptPopup = () => {
+    setShowReceiptPopup(false);
+   };
   return (
     <div className="kiosk-container">
       {isAdminMode ? (
@@ -705,20 +707,21 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
       {/* 이전 주문 내역 버튼 */}
       {lastOrder && (
         <button
-          className="last-order-btn"
-          onClick={() => setShowLastOrderPopup(true)}
+          className="receipt-btn"
+          onClick={() => setShowReceiptPopup(true)}
         >
-          이전 주문 내역 확인
+          주문 영수증 보기
         </button>
       )}
 
-      {/* 이전 주문 내역 팝업 */}
-      {showLastOrderPopup && (
+      {/* 주문 영수증 팝업 */}
+      {showReceiptPopup && (
         <div className="modal">
           <div className="modal-content">
-            <h2 className="modal-title">이전 주문 내역</h2>
+            <h2>주문 영수증</h2>
             <p>주문 번호: <strong>{lastOrder.orderNumber}</strong></p>
             <p>주문 날짜: {lastOrder.orderDate}</p>
+            {/* 주문 내역 표시 */}
             <ul className="order-item-list">
               {lastOrder.orderItems.map((item, index) => (
                 <li key={index} className="order-item">
@@ -747,7 +750,7 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
             <div className="modal-buttons">
               <button
                 className="modal-cancel-btn"
-                onClick={() => setShowLastOrderPopup(false)}
+                onClick={handleCloseReceiptPopup}
               >
                 닫기
               </button>
@@ -755,6 +758,7 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
           </div>
         </div>
       )}
+
 
       {/* 장바구니 팝업 */}
       {showCartPopup && (
