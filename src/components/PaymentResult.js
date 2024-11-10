@@ -19,8 +19,9 @@ const PaymentResult = () => {
     const pg_token = query.get("pg_token");
     const tid = localStorage.getItem("tid");
     const partner_order_id = localStorage.getItem('partner_order_id');
+    const email = localStorage.getItem('email'); // 사용자 이메일 가져오기
 
-    if (pg_token && tid && partner_order_id) {
+    if (pg_token && tid && partner_order_id && email) {
       // 백엔드로 결제 승인 요청
       fetch(`${BACKEND_URL}/api/payments/approve`, {
         method: "POST",
@@ -49,7 +50,7 @@ const PaymentResult = () => {
             setCartItems(orderDetails.cartItems);
             setCartTotal(orderDetails.cartTotal);
 
-            // 주문 내역을 lastOrder로 저장
+            // 주문 내역을 lastOrder로 저장 (사용자별로)
             const orderDate = new Date().toLocaleString();
             const lastOrder = {
               orderNumber: newOrderNumber,
@@ -57,7 +58,8 @@ const PaymentResult = () => {
               orderItems: orderDetails.cartItems,
               totalAmount: orderDetails.cartTotal,
             };
-            localStorage.setItem('lastOrder', JSON.stringify(lastOrder));
+            localStorage.setItem(`lastOrder_${email}`, JSON.stringify(lastOrder));
+            
           }
 
           // 팝업 표시
@@ -132,7 +134,7 @@ const PaymentResult = () => {
                 </li>
               ))}
             </ul>
-            <p className="order-total">총 합계: ₩{cartTotal.toLocaleString()}</p>
+            <p className="order-total">총 합계: ₩{Number(cartTotal).toLocaleString()}</p>
             <button className="confirm-button" onClick={handleClosePopup}>
               확인
             </button>

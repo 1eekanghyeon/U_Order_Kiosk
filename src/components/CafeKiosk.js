@@ -8,6 +8,7 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { AnimatePresence, motion } from "framer-motion";
 import { BACKEND_URL } from './config';
+
 // 한 페이지에 표시할 메뉴 수
 const ITEMS_PER_PAGE = 4;
 
@@ -137,7 +138,7 @@ const DraggableMenuItem = ({ item, index, updateMenuItem, deleteMenuItem }) => {
   );
 };
 
-const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
+const CafeKiosk = ({ isAdminMode, userEmail, signal, onLogout }) => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null); // 초기 선택된 카테고리 없음
   const [menuItems, setMenuItems] = useState([]);
@@ -149,7 +150,8 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
   const [cartItems, setCartItems] = useState([]); // 장바구니 아이템
   const [showCartPopup, setShowCartPopup] = useState(false); // 장바구니 팝업 표시 여부
 
-  const [showLastOrderPopup, setShowLastOrderPopup] = useState(false); // 이전 주문 내역 팝업 표시 여부
+  // 추가된 상태 변수
+  const [showReceiptPopup, setShowReceiptPopup] = useState(false); // 주문 영수증 팝업 표시 여부
   const [lastOrder, setLastOrder] = useState(null); // 이전 주문 내역
 
   useEffect(() => {
@@ -196,12 +198,16 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
 
   // 컴포넌트 마운트 시 이전 주문 내역 로드
   useEffect(() => {
-    const storedOrder = localStorage.getItem('lastOrder');
+    const storedOrder = localStorage.getItem(`lastOrder_${userEmail}`);
     if (storedOrder) {
       setLastOrder(JSON.parse(storedOrder));
     }
-  }, []);
-  const [showReceiptPopup, setShowReceiptPopup] = useState(false);
+  }, [userEmail]);
+
+  const handleCloseReceiptPopup = () => {
+    setShowReceiptPopup(false);
+  };
+
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
     setCurrentPage(0); // currentPage를 0으로 재설정
@@ -473,27 +479,22 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
     setCartItems(updatedCartItems);
   };
 
-    // CafeKiosk.js에서 주문 내역 저장
-  const orderDetails = {
-    cartItems,
-    cartTotal,
-  };
-  localStorage.setItem('orderDetails', JSON.stringify(orderDetails));
-
-
-  // 결제하기 함수 수정 (백엔드 URL을 실제 도메인으로 변경해야 함)
+  // 결제하기 함수 수정
   const handlePayment = async () => {
     try {
-      // 결제 전에 주문 내역과 총 금액을 로컬 스토리지에 저장
-      const orderDetails = {
-        cartItems,
-        cartTotal,
-      };
-      localStorage.setItem('orderDetails', JSON.stringify(orderDetails));
-
       // partner_order_id 생성 및 저장
       const partner_order_id = `order_${Date.now()}`;
-      localStorage.setItem('partner_order_id', partner_order_id);
+
+      // 주문 내역 생성
+      const orderDetails = {
+        orderNumber: partner_order_id,
+        orderItems: cartItems,
+        totalAmount: cartTotal,
+        orderDate: new Date().toLocaleString(),
+      };
+
+      // 사용자별로 lastOrder 저장
+      localStorage.setItem(`lastOrder_${userEmail}`, JSON.stringify(orderDetails));
 
       // 결제 준비 요청에 partner_order_id 포함
       const response = await fetch(`${BACKEND_URL}/api/payments/ready`, {
@@ -516,11 +517,14 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
       alert('결제 준비 중 오류가 발생했습니다.');
     }
   };
-   const handleCloseReceiptPopup = () => {
-    setShowReceiptPopup(false);
-   };
+
   return (
     <div className="kiosk-container">
+      {/* 로그아웃 버튼 유지 */}
+      <button className="logout-btn" onClick={onLogout}>
+        로그아웃
+      </button>
+
       {isAdminMode ? (
         <input
           type="text"
@@ -758,7 +762,6 @@ const CafeKiosk = ({ isAdminMode, userEmail, signal }) => {
           </div>
         </div>
       )}
-
 
       {/* 장바구니 팝업 */}
       {showCartPopup && (

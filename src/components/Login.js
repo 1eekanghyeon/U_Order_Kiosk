@@ -67,6 +67,7 @@ const Login = ({ onLoginSuccess }) => {
 
         // 관리자 여부와 상관없이 onLoginSuccess 호출
         onLoginSuccess(isAdmin, user.email, storeId);
+        navigate("/");
       } else {
         // 사용자 문서가 없을 경우 처리
         setErrorMessage("사용자 정보를 찾을 수 없습니다.");
@@ -97,6 +98,7 @@ const Login = ({ onLoginSuccess }) => {
 
         // 관리자 여부와 상관없이 onLoginSuccess 호출
         onLoginSuccess(isAdmin, user.email, storeId);
+        navigate("/");
       } else {
         // 추가 정보가 없으면 입력 창 표시
         setFormData({
@@ -179,6 +181,7 @@ const Login = ({ onLoginSuccess }) => {
 
       // 추가 정보 저장 후 onLoginSuccess 호출
       onLoginSuccess(isAdmin, email, storeId);
+      navigate("/");
     } catch (error) {
       console.error("정보 저장 중 오류:", error);
       setErrorMessage("정보 저장 중 오류가 발생했습니다.");

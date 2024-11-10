@@ -14,9 +14,7 @@ import WaitingScreen from "./components/WaitingScreen";
 import "./App.css";
 import logo from "./assets/logo.png";
 import PaymentResult from "./components/PaymentResult";
-
-// Firestore 관련 import 추가
-import { db } from "./firebase";
+import { db, auth } from "./firebase";
 import { doc, onSnapshot } from "firebase/firestore";
 
 function App() {
@@ -27,35 +25,42 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(
     localStorage.getItem("isAdmin") === "true"
   );
-  const [isWaiting, setIsWaiting] = useState(
-    localStorage.getItem("isWaiting") === "true"
-  );
   const [email, setEmail] = useState(localStorage.getItem("email") || "");
-  const [signal, setSignal] = useState(null); // signal 상태 추가
+  const [signal, setSignal] = useState(null);
 
-  // 관리자 모드 토글
   const toggleMode = () => {
     setIsAdminMode((prevMode) => !prevMode);
   };
 
-  // 로그인 성공 시 호출
   const handleLoginSuccess = (isAdminStatus, emailValue, storeIdValue) => {
-    setIsAdmin(isAdminStatus); // isAdmin 설정
+    setIsAdmin(isAdminStatus);
     setEmail(emailValue);
-    setStoreId(storeIdValue); // storeId 설정
-    setIsWaiting(true); // 모든 사용자에 대해 isWaiting을 true로 설정
+    setStoreId(storeIdValue);
 
     // localStorage에 저장
     localStorage.setItem("isAdmin", isAdminStatus);
     localStorage.setItem("email", emailValue);
     localStorage.setItem("storeId", storeIdValue);
-    localStorage.setItem("isWaiting", "true");
   };
 
-  // isWaiting 값 변경 시 localStorage에 저장
-  useEffect(() => {
-    localStorage.setItem("isWaiting", isWaiting ? "true" : "false");
-  }, [isWaiting]);
+  const handleLogout = () => {
+    setEmail("");
+    setIsAdmin(false);
+    setStoreId(null);
+    setIsAdminMode(false);
+    setSignal(null);
+
+    // localStorage에서도 삭제
+    localStorage.removeItem("email");
+    localStorage.removeItem("isAdmin");
+    localStorage.removeItem("storeId");
+
+    // Firebase에서 로그아웃
+    auth.signOut();
+
+    // 로그인 페이지로 리다이렉트
+    window.location.href = "/login";
+  };
 
   // Firestore의 signal 값 변화를 감지
   useEffect(() => {
@@ -68,13 +73,6 @@ function App() {
 
           // signal 값이 변경되면 isAdminMode를 false로 설정
           setIsAdminMode(false);
-
-          // signal 값에 따라 isWaiting 상태를 업데이트
-          if (data.signal === "0") {
-            setIsWaiting(true);
-          } else {
-            setIsWaiting(false);
-          }
         }
       });
       return () => unsubscribe();
@@ -94,8 +92,12 @@ function App() {
           <Route
             path="/"
             element={
-              isWaiting ? (
-                <Navigate to="/waiting" replace />
+              email ? (
+                signal && signal !== "0" ? (
+                  <Navigate to="/kiosk" replace />
+                ) : (
+                  <Navigate to="/waiting" replace />
+                )
               ) : (
                 <Login onLoginSuccess={handleLoginSuccess} />
               )
@@ -109,25 +111,17 @@ function App() {
           <Route
             path="/waiting"
             element={
-              isWaiting ? (
-                <WaitingScreen
-                  changeStore={() => {}}
-                  userEmail={email}
-                  isAdmin={isAdmin}
-                />
+              signal && signal !== "0" ? (
+                <Navigate to="/kiosk" replace />
               ) : (
-                <Navigate to="/" replace />
+                <WaitingScreen userEmail={email} onLogout={handleLogout} />
               )
             }
           />
           <Route
             path="/kiosk"
             element={
-              isWaiting ? (
-                <Navigate to="/waiting" replace />
-              ) : signal === "0" ? (
-                <Navigate to="/waiting" replace />
-              ) : (
+              signal && signal !== "0" ? (
                 <div>
                   {isAdmin && String(storeId) === signal && (
                     <button className="toggle-mode-btn" onClick={toggleMode}>
@@ -138,8 +132,11 @@ function App() {
                     isAdminMode={isAdminMode}
                     userEmail={email}
                     signal={signal}
+                    onLogout={handleLogout}
                   />
                 </div>
+              ) : (
+                <Navigate to="/waiting" replace />
               )
             }
           />

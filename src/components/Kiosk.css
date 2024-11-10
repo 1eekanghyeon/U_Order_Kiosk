@@ -601,16 +601,43 @@ body {
 .receipt-btn {
   font-family: 'Jua', sans-serif;
   position: fixed;
-  bottom: 40px; /* 장바구니 버튼 위에 위치하도록 */
+  bottom: 80px;
   right: 20px;
-  padding: 10px 20px;
-  background-color: #ff9800;
-  color: white;
-  border: none;
-  border-radius: 5px;
+  background-color: #c75959;
+  padding: 15px 45px;
+  border-radius: 30px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  font-size: 18px;
+  color: #fff;
   cursor: pointer;
+  z-index: 100;
+  transition: background-color 0.3s ease;
 }
 
 .receipt-btn:hover {
   background-color: #e68a00;
+}
+
+/* 로그아웃 버튼 스타일 */
+.logout-btn {
+ 
+  font-family: 'Jua', sans-serif;
+  position: fixed;
+  top: 1px;
+  right: 5px;
+  padding: 5px 5px;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  font-size: 10px;
+  cursor: pointer;
+  z-index: 100;
+  transition: background-color 0.3s ease, transform 0.2s;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.logout-btn:hover {
+  background-color: #c0392b;
+  transform: scale(1.05);
 }

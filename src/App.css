@@ -292,3 +292,23 @@ button.google-btn:hover {
     font-size: 16px;
   }
 }
+
+
+.logout-btn {
+  font-family: 'Jua', sans-serif;
+  margin-top: 20px;
+  padding: 10px 40px;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.logout-btn:hover {
+  background-color: #c0392b;
+  transform: scale(1.05);
+}
